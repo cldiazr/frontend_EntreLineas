@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Ban } from "lucide-react";
 import { getSaleBatches } from "../services/tandasService.js";
 import { getProducts } from "../services/productsService.js";
-import { getSales } from "../services/salesService.js";
+import { getSales, cancelSale } from "../services/salesService.js";
 import { formatDate, formatUSD } from "../utils/formatters.js";
 import Button from "../components/ui/Button.jsx";
 import Card from "../components/ui/Card.jsx";
@@ -12,6 +12,7 @@ import Select from "../components/ui/Select.jsx";
 import EmptyState from "../components/ui/EmptyState.jsx";
 import Badge from "../components/ui/Badge.jsx";
 import FormSale from "../components/FormSale.jsx";
+import CancelDialog from "../components/CancelDialog.jsx";
 
 export default function Ventas() {
   const [batches, setBatches] = useState([]);
@@ -20,6 +21,9 @@ export default function Ventas() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [notice, setNotice] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelError, setCancelError] = useState("");
+  const [cancelling, setCancelling] = useState(false);
 
   const [filters, setFilters] = useState({
     status: "",
@@ -47,16 +51,18 @@ export default function Ventas() {
 
   const availableProductions = useMemo(() => {
     return batches.flatMap((batch) =>
-      batch.productions
-        .filter((p) => p.quantityAvailable > 0)
-        .map((p) => ({
-          id: p.id,
-          label: `Tanda #${batch.batchNumber} · ${p.product.name} · $${p.unitPriceUSD} · ${p.quantityAvailable} disp.`,
-          batchNumber: batch.batchNumber,
-          productName: p.product.name,
-          unitPriceUSD: p.unitPriceUSD,
-          quantityAvailable: p.quantityAvailable,
-        }))
+      batch.status === "cancelled"
+        ? []
+        : batch.productions
+            .filter((p) => p.status !== "cancelled" && p.quantityAvailable > 0)
+            .map((p) => ({
+              id: p.id,
+              label: `Tanda #${batch.batchNumber} · ${p.product.name} · $${p.unitPriceUSD} · ${p.quantityAvailable} disp.`,
+              batchNumber: batch.batchNumber,
+              productName: p.product.name,
+              unitPriceUSD: p.unitPriceUSD,
+              quantityAvailable: p.quantityAvailable,
+            }))
     );
   }, [batches]);
 
@@ -78,9 +84,32 @@ export default function Ventas() {
     setTimeout(() => setNotice(null), 4000);
   };
 
+  const handleCancel = async (reason) => {
+    if (!cancelTarget) return;
+    setCancelling(true);
+    setCancelError("");
+    try {
+      await cancelSale(cancelTarget.id, reason);
+      setCancelTarget(null);
+      loadData();
+      setNotice({ type: "success", text: "Venta cancelada correctamente" });
+      setTimeout(() => setNotice(null), 4000);
+    } catch (error) {
+      setCancelError(error.response?.data?.message || "Error al cancelar la venta");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const resetFilters = () => {
     setFilters({ status: "", customerName: "", productId: "", dateFrom: "", dateTo: "" });
     loadData();
+  };
+
+  const statusBadge = (status) => {
+    if (status === "paid") return { variant: "paid", label: "Pagada" };
+    if (status === "cancelled") return { variant: "danger", label: "Cancelada" };
+    return { variant: "pending", label: "Pendiente" };
   };
 
   return (
@@ -118,6 +147,7 @@ export default function Ventas() {
             <option value="">Todos</option>
             <option value="pending">Pendiente</option>
             <option value="paid">Pagada</option>
+            <option value="cancelled">Cancelada</option>
           </Select>
           <Input
             label="Cliente"
@@ -185,35 +215,55 @@ export default function Ventas() {
                 <th className="px-4 py-3 text-right">Precio</th>
                 <th className="px-4 py-3 text-right">Total USD</th>
                 <th className="px-4 py-3">Estado</th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {sales.map((sale) => (
-                <tr key={sale.id} className="hover:bg-slate-50">
-                  <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                    {formatDate(sale.createdAt)}
-                  </td>
-                  <td className="px-4 py-3 font-medium text-slate-900">{sale.customerName}</td>
-                  <td className="px-4 py-3 text-slate-700">
-                    {sale.batchProduction?.product?.name}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    #{sale.batchProduction?.batch?.batchNumber}
-                  </td>
-                  <td className="px-4 py-3 text-right text-slate-700">{sale.quantity}</td>
-                  <td className="px-4 py-3 text-right text-slate-700">
-                    {formatUSD(sale.unitPriceUSD)}
-                  </td>
-                  <td className="px-4 py-3 text-right font-semibold text-slate-900">
-                    {formatUSD(sale.totalUSD)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={sale.status === "paid" ? "paid" : "pending"}>
-                      {sale.status === "paid" ? "Pagada" : "Pendiente"}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
+              {sales.map((sale) => {
+                const isCancelled = sale.status === "cancelled";
+                const badge = statusBadge(sale.status);
+                return (
+                  <tr
+                    key={sale.id}
+                    className={isCancelled ? "opacity-50 hover:bg-slate-50" : "hover:bg-slate-50"}
+                  >
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                      {formatDate(sale.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-slate-900">{sale.customerName}</td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {sale.batchProduction?.product?.name}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      #{sale.batchProduction?.batch?.batchNumber}
+                    </td>
+                    <td className="px-4 py-3 text-right text-slate-700">{sale.quantity}</td>
+                    <td className="px-4 py-3 text-right text-slate-700">
+                      {formatUSD(sale.unitPriceUSD)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                      {formatUSD(sale.totalUSD)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={badge.variant}>{badge.label}</Badge>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {!isCancelled && (
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() => {
+                            setCancelTarget(sale);
+                            setCancelError("");
+                          }}
+                        >
+                          <Ban className="h-4 w-4" /> Cancelar
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -226,6 +276,20 @@ export default function Ventas() {
           onClose={() => setModalOpen(false)}
         />
       </Modal>
+
+      <CancelDialog
+        open={Boolean(cancelTarget)}
+        title="Cancelar venta"
+        message={`¿Cancelar la venta a ${cancelTarget?.customerName ?? ""} por ${
+          cancelTarget ? formatUSD(cancelTarget.totalUSD) : ""
+        }?`}
+        consequences="Se restaurará la disponibilidad de la producción. No se modifican billeteras."
+        confirmLabel="Cancelar venta"
+        loading={cancelling}
+        error={cancelError}
+        onConfirm={handleCancel}
+        onCancel={() => setCancelTarget(null)}
+      />
     </div>
   );
 }

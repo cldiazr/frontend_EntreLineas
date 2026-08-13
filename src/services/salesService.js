@@ -24,3 +24,8 @@ export async function getPayments(saleId) {
   const { data } = await api.get(`/sales/${saleId}/payments`);
   return data;
 }
+
+export async function cancelSale(id, reason) {
+  const { data } = await api.patch(`/sales/${id}/cancel`, { reason });
+  return data;
+}
