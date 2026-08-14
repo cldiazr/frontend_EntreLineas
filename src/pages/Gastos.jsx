@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
-import { Wallet } from "lucide-react";
+import { Ban, Wallet } from "lucide-react";
 import { getInventory } from "../services/inventoryService.js";
-import { getInventoryPurchases } from "../services/purchasesService.js";
+import {
+  getInventoryPurchases,
+  cancelInventoryPurchase,
+} from "../services/purchasesService.js";
 import { useWallet } from "../hooks/useWallet.js";
 import { formatDate, formatVES } from "../utils/formatters.js";
 import Button from "../components/ui/Button.jsx";
 import Card from "../components/ui/Card.jsx";
+import Badge from "../components/ui/Badge.jsx";
 import Input from "../components/ui/Input.jsx";
 import Select from "../components/ui/Select.jsx";
 import EmptyState from "../components/ui/EmptyState.jsx";
 import FormPurchase from "../components/FormPurchase.jsx";
+import CancelDialog from "../components/CancelDialog.jsx";
 
 export default function Gastos() {
   const { refreshWallets } = useWallet();
@@ -17,6 +22,9 @@ export default function Gastos() {
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState("");
   const [filters, setFilters] = useState({ itemId: "", supplier: "", dateFrom: "", dateTo: "" });
 
   const loadData = useCallback(async () => {
@@ -51,6 +59,24 @@ export default function Gastos() {
     loadData();
     setNotice({ type: "success", text: "Compra registrada: se debitó la billetera VES y aumentó el stock" });
     setTimeout(() => setNotice(null), 5000);
+  };
+
+  const handleCancel = async (reason) => {
+    if (!cancelTarget) return;
+    setCancelling(true);
+    setCancelError("");
+    try {
+      await cancelInventoryPurchase(cancelTarget.id, reason);
+      setCancelTarget(null);
+      refreshWallets();
+      loadData();
+      setNotice({ type: "success", text: "Compra cancelada: se devolvió el monto a la billetera VES" });
+      setTimeout(() => setNotice(null), 5000);
+    } catch (error) {
+      setCancelError(error.response?.data?.message || "Error al cancelar la compra");
+    } finally {
+      setCancelling(false);
+    }
   };
 
   const resetFilters = () => {
@@ -143,11 +169,16 @@ export default function Gastos() {
                 <th className="px-4 py-3 text-right">Cant.</th>
                 <th className="px-4 py-3 text-right">P. unitario</th>
                 <th className="px-4 py-3 text-right">Total VES</th>
+                <th className="px-4 py-3 text-center">Estado</th>
+                <th className="px-4 py-3 text-right">Acción</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {purchases.map((purchase) => (
-                <tr key={purchase.id} className="hover:bg-slate-50">
+                <tr
+                  key={purchase.id}
+                  className={purchase.status === "cancelled" ? "opacity-50 hover:bg-slate-50" : "hover:bg-slate-50"}
+                >
                   <td className="whitespace-nowrap px-4 py-3 text-slate-600">
                     {formatDate(purchase.purchaseDate)}
                   </td>
@@ -163,12 +194,46 @@ export default function Gastos() {
                   <td className="px-4 py-3 text-right font-semibold text-slate-900">
                     {formatVES(purchase.totalVES)}
                   </td>
+                  <td className="px-4 py-3 text-center">
+                    {purchase.status === "cancelled" ? (
+                      <Badge variant="danger">Cancelada</Badge>
+                    ) : (
+                      <Badge variant="active">Activa</Badge>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {purchase.status !== "cancelled" && (
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => setCancelTarget(purchase)}
+                      >
+                        <Ban className="h-4 w-4" /> Cancelar
+                      </Button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+
+      <CancelDialog
+        open={Boolean(cancelTarget)}
+        title="Cancelar compra"
+        message={
+          cancelTarget
+            ? `¿Cancelar la compra de ${cancelTarget.quantity} ${cancelTarget.item?.name ?? ""} por ${formatVES(cancelTarget.totalVES)}?`
+            : ""
+        }
+        consequences="Se devolverá el total VES a la billetera y se reducirá el stock del inventario."
+        confirmLabel="Cancelar compra"
+        loading={cancelling}
+        error={cancelError}
+        onConfirm={handleCancel}
+        onCancel={() => setCancelTarget(null)}
+      />
     </div>
   );
 }

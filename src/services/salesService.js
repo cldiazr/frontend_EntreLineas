@@ -29,3 +29,8 @@ export async function cancelSale(id, reason) {
   const { data } = await api.patch(`/sales/${id}/cancel`, { reason });
   return data;
 }
+
+export async function cancelPayment(saleId, paymentId, reason) {
+  const { data } = await api.patch(`/sales/${saleId}/payments/${paymentId}/cancel`, { reason });
+  return data;
+}

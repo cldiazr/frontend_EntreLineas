@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeftRight } from "lucide-react";
-import { getConversions, createConversion } from "../services/conversionsService.js";
+import { ArrowLeftRight, Ban } from "lucide-react";
+import {
+  getConversions,
+  createConversion,
+  cancelConversion,
+} from "../services/conversionsService.js";
 import { getExchangeRates } from "../services/exchangeRatesService.js";
 import { getCommissionPresets } from "../services/commissionPresetsService.js";
 import { useWallet } from "../hooks/useWallet.js";
@@ -13,6 +17,7 @@ import Select from "../components/ui/Select.jsx";
 import EmptyState from "../components/ui/EmptyState.jsx";
 import Badge from "../components/ui/Badge.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import CancelDialog from "../components/CancelDialog.jsx";
 import { SkeletonList } from "../components/ui/Skeleton.jsx";
 
 export default function Conversiones() {
@@ -28,6 +33,9 @@ export default function Conversiones() {
   const [loading, setLoading] = useState(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState("");
   const [filters, setFilters] = useState({ direction: "", dateFrom: "", dateTo: "" });
 
   const loadData = useCallback(async () => {
@@ -92,6 +100,23 @@ export default function Conversiones() {
   const resetFilters = () => {
     setFilters({ direction: "", dateFrom: "", dateTo: "" });
     loadData();
+  };
+
+  const handleCancel = async (reason) => {
+    if (!cancelTarget) return;
+    setCancelling(true);
+    setCancelError("");
+    try {
+      await cancelConversion(cancelTarget.id, reason);
+      setCancelTarget(null);
+      refreshWallets();
+      loadData();
+      toast.success("Conversión cancelada: se revirtieron ambas billeteras");
+    } catch (error) {
+      setCancelError(error.response?.data?.message || "Error al cancelar la conversión");
+    } finally {
+      setCancelling(false);
+    }
   };
 
   const originCurrency = direction === "VES_TO_USD" ? "VES" : "USD";
@@ -244,11 +269,16 @@ export default function Conversiones() {
                 <th className="px-4 py-3 text-right">Debita</th>
                 <th className="px-4 py-3 text-right">Recibe</th>
                 <th className="px-4 py-3 text-right">Tasa</th>
+                <th className="px-4 py-3 text-center">Estado</th>
+                <th className="px-4 py-3 text-right">Acción</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {conversions.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50">
+                <tr
+                  key={c.id}
+                  className={c.status === "cancelled" ? "opacity-50 hover:bg-slate-50" : "hover:bg-slate-50"}
+                >
                   <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(c.date)}</td>
                   <td className="px-4 py-3">
                     <Badge variant={c.direction === "VES_TO_USD" ? "info" : "active"}>
@@ -268,6 +298,24 @@ export default function Conversiones() {
                     {c.direction === "VES_TO_USD" ? formatUSD(c.amountTo) : `${c.amountTo} Bs.`}
                   </td>
                   <td className="px-4 py-3 text-right text-slate-600">{c.rate}</td>
+                  <td className="px-4 py-3 text-center">
+                    {c.status === "cancelled" ? (
+                      <Badge variant="danger">Cancelada</Badge>
+                    ) : (
+                      <Badge variant="active">Activa</Badge>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {c.status !== "cancelled" && (
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => setCancelTarget(c)}
+                      >
+                        <Ban className="h-4 w-4" /> Cancelar
+                      </Button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -283,6 +331,26 @@ export default function Conversiones() {
         loading={submitting}
         onConfirm={handleConfirm}
         onCancel={() => setConfirmOpen(false)}
+      />
+
+      <CancelDialog
+        open={Boolean(cancelTarget)}
+        title="Cancelar conversión"
+        message={
+          cancelTarget
+            ? `¿Cancelar la conversión ${cancelTarget.direction === "VES_TO_USD" ? "VES → USD" : "USD → VES"} de ${cancelTarget.amountFrom}?`
+            : ""
+        }
+        consequences={
+          cancelTarget
+            ? `Se revertirá en ambas billeteras: origen +${cancelTarget.totalFrom} y destino −${cancelTarget.amountTo}.`
+            : ""
+        }
+        confirmLabel="Cancelar conversión"
+        loading={cancelling}
+        error={cancelError}
+        onConfirm={handleCancel}
+        onCancel={() => setCancelTarget(null)}
       />
     </div>
   );
