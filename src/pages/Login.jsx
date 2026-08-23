@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.js";
 import { validateLogin } from "../utils/validateLogin.js";
 import Button from "../components/ui/Button.jsx";
@@ -73,6 +73,13 @@ export default function Login() {
             Ingresar
           </Button>
         </form>
+
+        <p className="mt-4 text-center text-sm text-slate-500">
+          ¿No tienes cuenta?{" "}
+          <Link to="/registro" className="font-medium text-amber-600 hover:text-amber-700">
+            Regístrate
+          </Link>
+        </p>
       </div>
     </div>
   );

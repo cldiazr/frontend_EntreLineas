@@ -21,20 +21,20 @@ import { formatUSD, formatVES } from "../utils/formatters.js";
 import logoUrl from "../assets/logo_EntreLineas.svg";
 
 const navItems = [
-  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/tandas", label: "Tandas", icon: Package },
-  { path: "/ventas", label: "Ventas", icon: ShoppingCart },
-  { path: "/cuentas-cobrar", label: "Cuentas por Cobrar", icon: HandCoins },
-  { path: "/inventario", label: "Inventario", icon: Boxes },
-  { path: "/recetas", label: "Recetas", icon: ChefHat },
-  { path: "/gastos", label: "Gastos", icon: Wallet },
-  { path: "/conversiones", label: "Conversiones", icon: ArrowRightLeft },
-  { path: "/comisiones", label: "Comisiones", icon: Percent },
-  { path: "/usuarios", label: "Usuarios", icon: Users },
+  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, mod: "dashboard", act: "read" },
+  { path: "/tandas", label: "Tandas", icon: Package, mod: "tandas", act: "read" },
+  { path: "/ventas", label: "Ventas", icon: ShoppingCart, mod: "ventas", act: "read" },
+  { path: "/cuentas-cobrar", label: "Cuentas por Cobrar", icon: HandCoins, mod: "cuentasCobrar", act: "read" },
+  { path: "/inventario", label: "Inventario", icon: Boxes, mod: "inventario", act: "read" },
+  { path: "/recetas", label: "Recetas", icon: ChefHat, mod: "recetas", act: "read" },
+  { path: "/gastos", label: "Gastos", icon: Wallet, mod: "gastos", act: "read" },
+  { path: "/conversiones", label: "Conversiones", icon: ArrowRightLeft, mod: "conversiones", act: "read" },
+  { path: "/comisiones", label: "Comisiones", icon: Percent, mod: "comisiones", act: "read" },
+  { path: "/usuarios", label: "Usuarios", icon: Users, mod: "usuarios", act: "read" },
 ];
 
 export default function Layout() {
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
   const { ves, usd } = useWallet();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -63,7 +63,9 @@ export default function Layout() {
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3">
-        {navItems.map(({ path, label, icon: Icon }) => (
+        {navItems
+          .filter((item) => hasPermission(item.mod, item.act))
+          .map(({ path, label, icon: Icon }) => (
           <NavLink
             key={path}
             to={path}

@@ -1,4 +1,4 @@
-import { createContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import { getMe, login as loginRequest } from "../services/authService.js";
 
 export const AuthContext = createContext(null);
@@ -56,9 +56,18 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("user");
   };
 
+  const hasPermission = useCallback(
+    (module, action) => {
+      if (!user?.role?.permissions) return false;
+      const perms = user.role.permissions[module] ?? [];
+      return perms.includes(action);
+    },
+    [user]
+  );
+
   const value = useMemo(
-    () => ({ user, token, loading, login, logout }),
-    [user, token, loading]
+    () => ({ user, token, loading, login, logout, hasPermission }),
+    [user, token, loading, hasPermission]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Layout from "./components/Layout.jsx";
 import Login from "./pages/Login.jsx";
+import Registro from "./pages/Registro.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Tandas from "./pages/Tandas.jsx";
 import Ventas from "./pages/Ventas.jsx";
@@ -18,6 +19,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/registro" element={<Registro />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
