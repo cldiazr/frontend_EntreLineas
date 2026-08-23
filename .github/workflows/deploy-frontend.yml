@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'frontend/**'
+      - 'src/**'
+      - '.github/workflows/**'
 
 permissions:
   contents: read
@@ -27,14 +28,12 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: frontend
         run: npm ci
 
       - name: Build
-        working-directory: frontend
         run: npm run build
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
@@ -46,7 +45,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: frontend/dist
+          path: dist
 
   deploy:
     environment:
