@@ -88,18 +88,18 @@ export default function Conversiones() {
 
     if (inputMode === "receive") {
       const montoUSDBruto = amount / rateValue;
-      const totalFrom = montoUSDBruto + 0.60;
+      const totalFrom = montoUSDBruto + 0.06;
       return {
         comisionPreset: 0,
-        comisionBinance: 0.60,
-        commissionAmount: 0.60,
+        comisionBinance: 0.06,
+        commissionAmount: 0.06,
         totalFrom,
         amountTo: amount,
       };
     }
 
-    if (amount < 0.60) return null;
-    const montoUSDNeto = amount - 0.60;
+    if (amount < 0.06) return null;
+    const montoUSDNeto = amount - 0.06;
     const amountTo = montoUSDNeto * rateValue;
     return {
       comisionPreset: 0,
@@ -176,9 +176,9 @@ export default function Conversiones() {
       return `Vas a convertir ${formatVES(calc.totalFrom)} a USD (tasa ${rate}). Comisión preset: ${formatUSD(calc.comisionPreset)} + Binance: ${formatUSD(calc.comisionBinance)}. Recibirás ${formatUSD(calc.amountTo)}. Esta operación es irreversible.`;
     }
     if (inputMode === "receive") {
-      return `Quieres recibir ${formatVES(calc.amountTo)}. Se debitarán ${formatUSD(calc.totalFrom)} (comisión Binance: $0.60). Esta operación es irreversible.`;
+      return `Quieres recibir ${formatVES(calc.amountTo)}. Se debitarán ${formatUSD(calc.totalFrom)} (comisión Binance: $0.06). Esta operación es irreversible.`;
     }
-    return `Vas a debitar ${formatUSD(calc.totalFrom)}. Recibirás ${formatVES(calc.amountTo)} (comisión Binance: $0.60). Esta operación es irreversible.`;
+    return `Vas a debitar ${formatUSD(calc.totalFrom)}. Recibirás ${formatVES(calc.amountTo)} (comisión Binance: $0.06). Esta operación es irreversible.`;
   })();
 
   return (
@@ -272,7 +272,7 @@ export default function Conversiones() {
           <div className="sm:col-span-2">
             <p className="text-xs font-medium text-slate-500">Comisión Binance</p>
             <p className="mt-1 text-sm font-semibold text-slate-800">
-              {isVEStoUSD ? "4.1% sobre el monto después del preset" : "$0.60 fijo"}
+              {isVEStoUSD ? "4.1% sobre el monto después del preset" : "$0.06 fijo"}
             </p>
           </div>
         </div>
@@ -291,7 +291,7 @@ export default function Conversiones() {
                   </p>
                 ) : (
                   <p className="text-slate-600">
-                    Binance: {formatUSD(0.60)} ·
+                    Binance: {formatUSD(0.06)} ·
                     Debita:{" "}
                     <span className="font-medium text-slate-900">{formatUSD(calc.totalFrom)}</span>
                   </p>
