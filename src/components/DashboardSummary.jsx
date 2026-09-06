@@ -1,4 +1,4 @@
-import { TrendingDown, TrendingUp, HandCoins, Wallet as WalletIcon } from "lucide-react";
+import { PiggyBank, TrendingDown, TrendingUp, HandCoins, Users, Wallet as WalletIcon } from "lucide-react";
 import Card from "./ui/Card.jsx";
 import { formatUSD } from "../utils/formatters.js";
 
@@ -27,6 +27,18 @@ export default function DashboardSummary({ summary, wallets, latestRate }) {
       value: formatUSD(summary.pendingCollectionsUSD),
       icon: HandCoins,
       color: "text-sky-600",
+    },
+    {
+      label: "Pagos a empleados",
+      value: formatUSD(summary.totalEmployeePaymentsUSD ?? 0),
+      icon: Users,
+      color: "text-violet-600",
+    },
+    {
+      label: "Retenido en negocio",
+      value: formatUSD(summary.retainedProfitUSD ?? 0),
+      icon: PiggyBank,
+      color: "text-teal-600",
     },
   ];
 
@@ -57,7 +69,7 @@ export default function DashboardSummary({ summary, wallets, latestRate }) {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map(({ label, value, icon: Icon, color }) => (
           <Card key={label}>
             <div className="flex items-center justify-between">

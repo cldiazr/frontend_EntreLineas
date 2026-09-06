@@ -12,6 +12,7 @@ import Gastos from "./pages/Gastos.jsx";
 import Recetas from "./pages/Recetas.jsx";
 import Conversiones from "./pages/Conversiones.jsx";
 import Comisiones from "./pages/Comisiones.jsx";
+import PagosEmpleados from "./pages/PagosEmpleados.jsx";
 import Usuarios from "./pages/Usuarios.jsx";
 
 export default function App() {
@@ -32,6 +33,7 @@ export default function App() {
             <Route path="/recetas" element={<Recetas />} />
             <Route path="/conversiones" element={<Conversiones />} />
             <Route path="/comisiones" element={<Comisiones />} />
+            <Route path="/pagos-empleados" element={<PagosEmpleados />} />
             <Route path="/usuarios" element={<Usuarios />} />
           </Route>
         </Route>

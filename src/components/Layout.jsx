@@ -2,6 +2,7 @@ import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   ArrowRightLeft,
+  Banknote,
   Boxes,
   ChefHat,
   HandCoins,
@@ -30,6 +31,7 @@ const navItems = [
   { path: "/gastos", label: "Gastos", icon: Wallet, mod: "gastos", act: "read" },
   { path: "/conversiones", label: "Conversiones", icon: ArrowRightLeft, mod: "conversiones", act: "read" },
   { path: "/comisiones", label: "Comisiones", icon: Percent, mod: "comisiones", act: "read" },
+  { path: "/pagos-empleados", label: "Pagos a Empleados", icon: Banknote, mod: "pagosEmpleados", act: "read" },
   { path: "/usuarios", label: "Usuarios", icon: Users, mod: "usuarios", act: "read" },
 ];
 

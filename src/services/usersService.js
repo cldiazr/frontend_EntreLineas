@@ -5,6 +5,11 @@ export async function getUsers() {
   return data;
 }
 
+export async function getApprovedUsers() {
+  const { data } = await api.get("/users/approved");
+  return data;
+}
+
 export async function updateUser(id, payload) {
   const { data } = await api.put(`/users/${id}`, payload);
   return data;

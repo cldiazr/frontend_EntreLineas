@@ -310,13 +310,13 @@ export default function Usuarios() {
                   <div key={r.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-4 py-3">
                     <div>
                       <p className="font-medium text-slate-900">{r.name}</p>
-                      <p className="text-xs text-slate-500">{r._count?.users ?? 0} usuarios</p>
+                      <p className="text-xs text-slate-500">{r.userCount ?? 0} usuarios</p>
                     </div>
                     <div className="flex gap-2">
                       <Button size="sm" variant="secondary" onClick={() => openEditRole(r)}>
                         Editar
                       </Button>
-                      {(r._count?.users ?? 0) === 0 && r.name !== "Admin" && (
+                      {(r.userCount ?? 0) === 0 && r.name !== "Admin" && (
                         <Button size="sm" variant="danger" onClick={() => setDeleteRoleTarget(r)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>

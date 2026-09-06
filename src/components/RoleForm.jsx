@@ -8,6 +8,7 @@ const MODULES = [
   { key: "gastos", label: "Gastos", actions: ["read", "create", "cancel"] },
   { key: "conversiones", label: "Conversiones", actions: ["read", "create", "cancel"] },
   { key: "comisiones", label: "Comisiones", actions: ["read", "create", "delete"] },
+  { key: "pagosEmpleados", label: "Pagos a Empleados", actions: ["read", "create", "cancel"] },
   { key: "usuarios", label: "Usuarios", actions: ["read", "create", "update", "approve"] },
 ];
 
