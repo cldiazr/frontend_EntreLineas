@@ -6,7 +6,6 @@ import {
   cancelEmployeePayment,
 } from "../services/employeePaymentsService.js";
 import { getApprovedUsers } from "../services/usersService.js";
-import { getExchangeRates } from "../services/exchangeRatesService.js";
 import { getDashboardSummary } from "../services/dashboardService.js";
 import { useWallet } from "../hooks/useWallet.js";
 import { useAuth } from "../hooks/useAuth.js";
@@ -53,13 +52,8 @@ export default function PagosEmpleados() {
 
   const loadData = useCallback(async () => {
     try {
-      const [{ payments: paymentData }, { exchangeRates }] = await Promise.all([
-        getEmployeePayments(),
-        getExchangeRates(),
-      ]);
+      const { payments: paymentData } = await getEmployeePayments();
       setPayments(paymentData);
-      const latest = exchangeRates?.[0];
-      if (latest) setForm((f) => ({ ...f, rate: String(latest.rateVESPerUSD) }));
     } catch {
       setLoadError("No se pudieron cargar los pagos.");
     } finally {
@@ -267,38 +261,16 @@ export default function PagosEmpleados() {
                   error={formErrors.amount}
                 />
 
-                {form.currency === "VES" ? (
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.0001"
-                    label="Tasa (Bs. por USD)"
-                    value={form.rate}
-                    onChange={(e) => setField("rate", e.target.value)}
-                    placeholder="0.00"
-                    error={formErrors.rate}
-                  />
-                ) : form.rate ? (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium text-slate-700">
-                      Tasa (auto-cargada)
-                    </span>
-                    <div className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-                      Bs. {form.rate} por USD
-                    </div>
-                  </div>
-                ) : (
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.0001"
-                    label="Tasa (Bs. por USD)"
-                    value={form.rate}
-                    onChange={(e) => setField("rate", e.target.value)}
-                    placeholder="0.00"
-                    error={formErrors.rate}
-                  />
-                )}
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.0001"
+                  label="Tasa (Bs. por USD)"
+                  value={form.rate}
+                  onChange={(e) => setField("rate", e.target.value)}
+                  placeholder="0.00"
+                  error={formErrors.rate}
+                />
 
                 <div className="flex flex-col gap-1 md:col-span-2">
                   <span className="text-sm font-medium text-slate-700">Equivalente</span>
