@@ -37,7 +37,7 @@ const navItems = [
 
 export default function Layout() {
   const { user, logout, hasPermission } = useAuth();
-  const { ves, usd } = useWallet();
+  const { ves, usd, officialRate } = useWallet();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -140,6 +140,11 @@ export default function Layout() {
 
           <div className="ml-auto flex items-center gap-3">
             <div className="hidden items-center gap-3 rounded-lg bg-slate-100 px-3 py-1.5 text-sm sm:flex">
+              {officialRate ? (
+                <span className="font-medium text-emerald-700">
+                  Tasa: {officialRate.toFixed(2)} Bs./USD
+                </span>
+              ) : null}
               <span className="font-medium text-slate-700">{formatVES(ves)}</span>
               <span className="text-slate-300">|</span>
               <span className="font-medium text-slate-700">{formatUSD(usd)}</span>

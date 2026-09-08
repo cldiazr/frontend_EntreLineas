@@ -22,7 +22,7 @@ import CancelDialog from "../components/CancelDialog.jsx";
 import { SkeletonList } from "../components/ui/Skeleton.jsx";
 
 export default function PagosEmpleados() {
-  const { ves, usd, refreshWallets } = useWallet();
+  const { ves, usd, officialRate, refreshWallets } = useWallet();
   const { hasPermission } = useAuth();
   const toast = useToast();
 
@@ -78,6 +78,10 @@ export default function PagosEmpleados() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    if (!form.rate && officialRate) setForm((f) => ({ ...f, rate: String(officialRate) }));
+  }, [form.rate, officialRate]);
 
   const setField = (key, value) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -268,7 +272,7 @@ export default function PagosEmpleados() {
                   label="Tasa (Bs. por USD)"
                   value={form.rate}
                   onChange={(e) => setField("rate", e.target.value)}
-                  placeholder="0.00"
+                  placeholder={officialRate ? String(officialRate) : "0.00"}
                   error={formErrors.rate}
                 />
 

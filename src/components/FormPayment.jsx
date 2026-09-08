@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPayment } from "../services/salesService.js";
 import Button from "./ui/Button.jsx";
 import Input from "./ui/Input.jsx";
 import { formatUSD } from "../utils/formatters.js";
+import { useWallet } from "../hooks/useWallet.js";
 
 export default function FormPayment({ sale, remainingUSD, onSuccess, onClose }) {
+  const { officialRate } = useWallet();
   const [amountVES, setAmountVES] = useState("");
   const [rate, setRate] = useState("");
   const [step, setStep] = useState("form");
@@ -14,6 +16,10 @@ export default function FormPayment({ sale, remainingUSD, onSuccess, onClose }) 
 
   const amountUSD =
     Number(amountVES) > 0 && Number(rate) > 0 ? Number(amountVES) / Number(rate) : 0;
+
+  useEffect(() => {
+    if (!rate && officialRate) setRate(String(officialRate));
+  }, [rate, officialRate]);
 
   const validate = () => {
     const errs = {};
@@ -92,7 +98,7 @@ export default function FormPayment({ sale, remainingUSD, onSuccess, onClose }) 
               label="Tasa del día (Bs./USD)"
               value={rate}
               onChange={(e) => setRate(e.target.value)}
-              placeholder="96.50"
+              placeholder={officialRate ? String(officialRate) : "96.50"}
               error={errors.rate}
             />
           </div>

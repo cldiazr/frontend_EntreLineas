@@ -8,8 +8,10 @@ import DashboardSummary from "../components/DashboardSummary.jsx";
 import DashboardChart from "../components/DashboardChart.jsx";
 import ProductPerformance from "../components/ProductPerformance.jsx";
 import { SkeletonCard, SkeletonList } from "../components/ui/Skeleton.jsx";
+import { useWallet } from "../hooks/useWallet.js";
 
 export default function Dashboard() {
+  const { officialRate } = useWallet();
   const [summary, setSummary] = useState(null);
   const [monthly, setMonthly] = useState(null);
   const [performance, setPerformance] = useState(null);
@@ -78,7 +80,7 @@ export default function Dashboard() {
             <DashboardSummary
               summary={summary.summary}
               wallets={summary.wallets}
-              latestRate={latestRate}
+              latestRate={officialRate ?? latestRate}
             />
           )}
           {monthly && (

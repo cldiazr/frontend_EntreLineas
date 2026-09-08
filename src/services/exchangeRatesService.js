@@ -9,3 +9,8 @@ export async function getExchangeRates() {
   const { data } = await api.get("/exchange-rates");
   return data;
 }
+
+export async function getOfficialRate() {
+  const { data } = await api.get("/exchange-rates/official");
+  return data;
+}

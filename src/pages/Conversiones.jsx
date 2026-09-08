@@ -5,7 +5,6 @@ import {
   createConversion,
   cancelConversion,
 } from "../services/conversionsService.js";
-import { getExchangeRates } from "../services/exchangeRatesService.js";
 import { getCommissionPresets } from "../services/commissionPresetsService.js";
 import { useWallet } from "../hooks/useWallet.js";
 import { useToast } from "../hooks/useToast.js";
@@ -21,7 +20,7 @@ import CancelDialog from "../components/CancelDialog.jsx";
 import { SkeletonList } from "../components/ui/Skeleton.jsx";
 
 export default function Conversiones() {
-  const { refreshWallets } = useWallet();
+  const { officialRate, refreshWallets } = useWallet();
   const toast = useToast();
 
   const [direction, setDirection] = useState("VES_TO_USD");
@@ -41,12 +40,12 @@ export default function Conversiones() {
 
   const loadData = useCallback(async () => {
     try {
-      const [{ conversions: conversionsData }, { presets: presetsData }, { exchangeRates }] =
-        await Promise.all([getConversions(), getCommissionPresets(), getExchangeRates()]);
+      const [{ conversions: conversionsData }, { presets: presetsData }] = await Promise.all([
+        getConversions(),
+        getCommissionPresets(),
+      ]);
       setConversions(conversionsData);
       setPresets(presetsData);
-      const latest = exchangeRates[0];
-      if (latest) setRate(String(latest.rateVESPerUSD));
     } finally {
       setLoading(false);
     }
@@ -55,6 +54,10 @@ export default function Conversiones() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    if (!rate && officialRate) setRate(String(officialRate));
+  }, [rate, officialRate]);
 
   const applyFilters = useCallback(async () => {
     const params = {};
@@ -249,7 +252,7 @@ export default function Conversiones() {
                 label="Tasa (Bs./USD)"
                 value={rate}
                 onChange={(e) => setRate(e.target.value)}
-                placeholder="96.50"
+                placeholder={officialRate ? String(officialRate) : "96.50"}
               />
             </div>
           </div>
